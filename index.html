@@ -95,6 +95,9 @@
   .cabecalho-secao h2{ margin:0; font-size:1.15rem; color:var(--ink); }
 
   .detalhe-resumo{ background:var(--paper); border-left:4px solid var(--brass); padding:14px 16px; margin:16px 0; font-size:.92rem; line-height:1.6; }
+  .detalhe-resumo.detalhe-completo{ border-left-color:var(--ink-2); }
+  .rotulo-secao{ font-family:'IBM Plex Sans',sans-serif; font-size:.74rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-soft); margin:18px 0 6px; }
+  .rotulo-secao:first-of-type{ margin-top:8px; }
   .rodape-acoes{ display:flex; justify-content:space-between; align-items:center; margin-top:22px; }
 
   .resumo-cartao{ list-style:none; margin:0; padding:0; }
@@ -187,6 +190,10 @@
     const linhas = texto.split(/\n+/).map(l => l.trim()).filter(Boolean).slice(0, maxLinhas || 2);
     return '<ul class="resumo-cartao resumo-preview">' + linhas.map(l => `<li>${linhaComNegrito(l)}</li>`).join('') + '</ul>';
   }
+  // Explicação completa: texto corrido (sem marcadores), só troca quebras de linha por <br>.
+  function formatarTextoCorrido(texto){
+    return `<p>${esc(texto || '').replace(/\n+/g, '<br>')}</p>`;
+  }
 
   function setTab(t){ state.tab = t; state.itemAbertoId = null; render(); }
 
@@ -220,8 +227,12 @@
             <p id="status-gabarito" class="muted" style="margin-top:6px; display:none;"></p>
           </div>
           <div class="campo full">
-            <label for="f-resumo">Resumo do erro</label>
-            <textarea id="f-resumo" required placeholder="- **O que cai:** ...&#10;- **Regra:** ...&#10;- **Cuidado com:** ..."></textarea>
+            <label for="f-cartao">Cartão de revisão (resumo rápido para decorar)</label>
+            <textarea id="f-cartao" placeholder="- **O que cai:** ...&#10;- **Regra:** ...&#10;- **Cuidado com:** ..."></textarea>
+          </div>
+          <div class="campo full">
+            <label for="f-resumo">Explicação completa</label>
+            <textarea id="f-resumo" required placeholder="Explicação completa do conceito cobrado e por que a resposta certa é essa..."></textarea>
           </div>
           <div class="campo full">
             <label for="f-enunciado">Enunciado original (opcional, para referência)</label>
@@ -240,18 +251,19 @@
 Vou te enviar uma questão que o candidato errou, copiada do Qconcursos (enunciado, alternativas e, possivelmente, a resposta certa indicada).
 
 Devolva SOMENTE um JSON válido, sem markdown, sem texto antes ou depois, exatamente neste formato:
-{"materia": "...", "conteudo": "...", "resumo": "...", "gabarito": "..."}
+{"materia": "...", "conteudo": "...", "cartao": "...", "resumo": "...", "gabarito": "..."}
 
 Onde:
 - "materia": a matéria do edital a que a questão pertence (ex: Direito Administrativo, Direito Constitucional, Língua Portuguesa, Direito Processual Civil, Raciocínio Lógico etc).
 - "conteudo": o assunto específico dentro da matéria (ex: "Atos administrativos - atributos", "Concordância verbal", "Prazos processuais").
-- "resumo": um resumo em formato de CARTÃO DE REVISÃO RÁPIDA, feito para decorar antes da prova. Regras obrigatórias de formato:
+- "cartao": um CARTÃO DE REVISÃO RÁPIDA, feito para decorar antes da prova. Regras obrigatórias de formato:
   1. Escreva exatamente estas 3 linhas, cada uma em seu próprio parágrafo, nesta ordem e começando com "- ":
      - "- **O que cai:** " + o conceito/instituto cobrado, em poucas palavras.
      - "- **Regra:** " + a regra decisiva para acertar essa questão.
      - "- **Cuidado com:** " + a pegadinha ou erro comum nesse tema.
   2. Dentro de cada linha, coloque em **negrito** (markdown, com **) apenas as 2 ou 3 palavras/termos realmente essenciais para decorar (nome do instituto, prazo, verbo decisivo, exceção) — não negrite a linha inteira.
   3. Cada linha deve ter no máximo 110 caracteres. Nada de parágrafos corridos ou introduções.
+- "resumo": a EXPLICAÇÃO COMPLETA, de 4 a 8 linhas, em texto corrido (sem marcadores nem negrito), explicando com mais detalhe o conceito cobrado e por que a resposta correta está certa — este é o material de estudo mais aprofundado, o "cartao" é só o resumo rápido para revisão.
 - "gabarito": a resposta certa (letra e/ou texto da alternativa), se estiver indicada no texto. Se não estiver explícita, infira com base no seu conhecimento e adicione "(inferido, confira no site)" ao final.
 
 Texto da questão:
@@ -293,10 +305,7 @@ ${textoQuestao}
     const prompt = `Você é um assistente de estudos para concurso de tribunal (cargo de analista judiciário).
 Um candidato registrou que, na questão abaixo, a resposta correta é: "${respostaCerta}".
 
-Escreva a justificativa em formato de CARTÃO DE REVISÃO RÁPIDA, feito para decorar antes da prova. Regras obrigatórias de formato:
-1. Escreva de 2 a 3 linhas curtas, cada uma começando com "- ", sem parágrafo corrido e sem repetir o enunciado.
-2. Dentro de cada linha, coloque em **negrito** (markdown, com **) apenas as 2 ou 3 palavras/termos essenciais (instituto jurídico, artigo de lei, regra gramatical, verbo decisivo) — não negrite a linha inteira.
-3. Cada linha deve ter no máximo 110 caracteres. Sem introduções como "claro" ou "aqui está".
+Escreva uma justificativa objetiva (4 a 8 linhas), em texto corrido, explicando por que essa é a resposta certa, citando o conceito, artigo de lei, regra gramatical ou raciocínio envolvido, focada no que o candidato precisa revisar para não errar de novo. Responda apenas com o texto corrido da justificativa, sem repetir o enunciado, sem introduções como "claro" ou "aqui está", e sem formatação markdown.
 
 Texto da questão:
 """
@@ -378,7 +387,7 @@ ${textoQuestao}
                 <span class="badge">${esc(e.materia)}</span>
                 <span class="badge brass">${esc(e.conteudo)}</span>
               </div>
-              ${formatarResumoPreview(e.resumo, 3)}
+              ${e.cartao ? formatarResumoPreview(e.cartao, 3) : `<p>${esc(truncar(e.resumo, 170))}</p>`}
             </div>`).join('')}
         </div>
       </div>`;
@@ -389,7 +398,8 @@ ${textoQuestao}
       <button class="link-x" data-voltar style="margin-bottom:16px;">← voltar ao caderno</button>
       <span class="badge">${esc(e.materia)}</span>
       <span class="badge brass" style="margin-left:6px;">${esc(e.conteudo)}</span>
-      <div class="detalhe-resumo">${formatarResumoCompleto(e.resumo)}</div>
+      ${e.cartao ? `<h4 class="rotulo-secao">Cartão de revisão</h4><div class="detalhe-resumo">${formatarResumoCompleto(e.cartao)}</div>` : ''}
+      ${e.resumo ? `<h4 class="rotulo-secao">Explicação completa</h4><div class="detalhe-resumo detalhe-completo">${formatarTextoCorrido(e.resumo)}</div>` : ''}
       ${e.gabarito ? `<p><strong>Resposta certa:</strong> ${esc(e.gabarito)}</p>` : ''}
       ${e.enunciado ? `<details style="margin-top:14px;"><summary style="cursor:pointer; color:var(--text-soft); font-size:.85rem;">ver enunciado original</summary><p style="margin-top:10px; line-height:1.6;">${esc(e.enunciado)}</p></details>` : ''}
       <div class="rodape-acoes">
@@ -479,6 +489,7 @@ ${textoQuestao}
         const resultado = await gerarResumoIA(texto);
         document.getElementById('f-materia').value = resultado.materia || '';
         document.getElementById('f-conteudo').value = resultado.conteudo || '';
+        document.getElementById('f-cartao').value = resultado.cartao || '';
         document.getElementById('f-resumo').value = resultado.resumo || '';
         document.getElementById('f-gabarito').value = resultado.gabarito || '';
         document.getElementById('f-enunciado').value = texto;
@@ -590,7 +601,7 @@ ${textoQuestao}
       const faltando = [];
       if(!materia) faltando.push('Matéria');
       if(!conteudo) faltando.push('Conteúdo / assunto');
-      if(!resumo) faltando.push('Resumo do erro');
+      if(!resumo) faltando.push('Explicação completa');
       if(faltando.length){
         statusForm.style.display = 'block';
         statusForm.textContent = 'Preencha antes de salvar: ' + faltando.join(', ') + '.';
@@ -602,6 +613,7 @@ ${textoQuestao}
         materia,
         conteudo,
         gabarito: document.getElementById('f-gabarito').value.trim(),
+        cartao: document.getElementById('f-cartao').value.trim(),
         resumo,
         enunciado: document.getElementById('f-enunciado').value.trim(),
         data: new Date().toISOString(),
