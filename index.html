@@ -94,8 +94,16 @@
   .cabecalho-secao{ display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px; }
   .cabecalho-secao h2{ margin:0; font-size:1.15rem; color:var(--ink); }
 
-  .detalhe-resumo{ background:var(--paper); border-left:4px solid var(--brass); padding:14px 16px; margin:16px 0; font-size:.92rem; line-height:1.6; white-space:pre-wrap; }
+  .detalhe-resumo{ background:var(--paper); border-left:4px solid var(--brass); padding:14px 16px; margin:16px 0; font-size:.92rem; line-height:1.6; }
   .rodape-acoes{ display:flex; justify-content:space-between; align-items:center; margin-top:22px; }
+
+  .resumo-cartao{ list-style:none; margin:0; padding:0; }
+  .resumo-cartao li{ position:relative; padding-left:16px; margin-bottom:6px; font-size:.9rem; line-height:1.5; }
+  .resumo-cartao li:last-child{ margin-bottom:0; }
+  .resumo-cartao li::before{ content:'—'; position:absolute; left:0; color:var(--brass); font-weight:700; }
+  .resumo-cartao strong{ font-weight:700; color:var(--ink); background:linear-gradient(to bottom, transparent 62%, var(--olive-bg) 62%); padding:0 1px; }
+  .detalhe-resumo .resumo-cartao li{ font-size:.94rem; }
+  .lista-item .resumo-preview{ margin-top:2px; }
 
   .caixa-extrair textarea{ width:100%; font-family:'IBM Plex Sans', sans-serif; font-size:.92rem; padding:10px 12px; border:1px solid var(--line); background:#fff; color:var(--text); resize:vertical; line-height:1.55; }
   .caixa-extrair textarea.area-questao{ min-height:260px; }
@@ -163,6 +171,23 @@
   function esc(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   function truncar(s, n){ s = s||''; return s.length > n ? s.slice(0,n).trim() + '…' : s; }
 
+  // Converte o resumo (texto com linhas "- " e **negrito** markdown) em HTML seguro,
+  // com o negrito destacado tipo marca-texto, para facilitar decorar antes da prova.
+  function linhaComNegrito(l){
+    return esc(l.replace(/^[-•]\s*/, '')).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  }
+  function formatarResumoCompleto(texto){
+    if(!texto) return '';
+    const linhas = texto.split(/\n+/).map(l => l.trim()).filter(Boolean);
+    if(linhas.length <= 1) return `<p>${linhaComNegrito(linhas[0] || texto)}</p>`;
+    return '<ul class="resumo-cartao">' + linhas.map(l => `<li>${linhaComNegrito(l)}</li>`).join('') + '</ul>';
+  }
+  function formatarResumoPreview(texto, maxLinhas){
+    if(!texto) return '';
+    const linhas = texto.split(/\n+/).map(l => l.trim()).filter(Boolean).slice(0, maxLinhas || 2);
+    return '<ul class="resumo-cartao resumo-preview">' + linhas.map(l => `<li>${linhaComNegrito(l)}</li>`).join('') + '</ul>';
+  }
+
   function setTab(t){ state.tab = t; state.itemAbertoId = null; render(); }
 
   function viewAdicionar(){
@@ -196,7 +221,7 @@
           </div>
           <div class="campo full">
             <label for="f-resumo">Resumo do erro</label>
-            <textarea id="f-resumo" required placeholder="O que revisar, por que errou, o que a banca cobrou..."></textarea>
+            <textarea id="f-resumo" required placeholder="- **O que cai:** ...&#10;- **Regra:** ...&#10;- **Cuidado com:** ..."></textarea>
           </div>
           <div class="campo full">
             <label for="f-enunciado">Enunciado original (opcional, para referência)</label>
@@ -220,7 +245,13 @@ Devolva SOMENTE um JSON válido, sem markdown, sem texto antes ou depois, exatam
 Onde:
 - "materia": a matéria do edital a que a questão pertence (ex: Direito Administrativo, Direito Constitucional, Língua Portuguesa, Direito Processual Civil, Raciocínio Lógico etc).
 - "conteudo": o assunto específico dentro da matéria (ex: "Atos administrativos - atributos", "Concordância verbal", "Prazos processuais").
-- "resumo": um resumo objetivo, de 4 a 8 linhas, explicando o conceito cobrado e por que a resposta correta está certa, focado no que o candidato precisa revisar para não errar de novo.
+- "resumo": um resumo em formato de CARTÃO DE REVISÃO RÁPIDA, feito para decorar antes da prova. Regras obrigatórias de formato:
+  1. Escreva exatamente estas 3 linhas, cada uma em seu próprio parágrafo, nesta ordem e começando com "- ":
+     - "- **O que cai:** " + o conceito/instituto cobrado, em poucas palavras.
+     - "- **Regra:** " + a regra decisiva para acertar essa questão.
+     - "- **Cuidado com:** " + a pegadinha ou erro comum nesse tema.
+  2. Dentro de cada linha, coloque em **negrito** (markdown, com **) apenas as 2 ou 3 palavras/termos realmente essenciais para decorar (nome do instituto, prazo, verbo decisivo, exceção) — não negrite a linha inteira.
+  3. Cada linha deve ter no máximo 110 caracteres. Nada de parágrafos corridos ou introduções.
 - "gabarito": a resposta certa (letra e/ou texto da alternativa), se estiver indicada no texto. Se não estiver explícita, infira com base no seu conhecimento e adicione "(inferido, confira no site)" ao final.
 
 Texto da questão:
@@ -262,7 +293,10 @@ ${textoQuestao}
     const prompt = `Você é um assistente de estudos para concurso de tribunal (cargo de analista judiciário).
 Um candidato registrou que, na questão abaixo, a resposta correta é: "${respostaCerta}".
 
-Escreva uma justificativa objetiva (4 a 8 linhas) explicando por que essa é a resposta certa, citando o conceito, artigo de lei, regra gramatical ou raciocínio envolvido, focada no que o candidato precisa revisar para não errar de novo. Responda apenas com o texto corrido da justificativa, sem repetir o enunciado, sem introduções como "claro" ou "aqui está", e sem formatação markdown.
+Escreva a justificativa em formato de CARTÃO DE REVISÃO RÁPIDA, feito para decorar antes da prova. Regras obrigatórias de formato:
+1. Escreva de 2 a 3 linhas curtas, cada uma começando com "- ", sem parágrafo corrido e sem repetir o enunciado.
+2. Dentro de cada linha, coloque em **negrito** (markdown, com **) apenas as 2 ou 3 palavras/termos essenciais (instituto jurídico, artigo de lei, regra gramatical, verbo decisivo) — não negrite a linha inteira.
+3. Cada linha deve ter no máximo 110 caracteres. Sem introduções como "claro" ou "aqui está".
 
 Texto da questão:
 """
@@ -344,7 +378,7 @@ ${textoQuestao}
                 <span class="badge">${esc(e.materia)}</span>
                 <span class="badge brass">${esc(e.conteudo)}</span>
               </div>
-              <p>${esc(truncar(e.resumo, 170))}</p>
+              ${formatarResumoPreview(e.resumo, 3)}
             </div>`).join('')}
         </div>
       </div>`;
@@ -355,7 +389,7 @@ ${textoQuestao}
       <button class="link-x" data-voltar style="margin-bottom:16px;">← voltar ao caderno</button>
       <span class="badge">${esc(e.materia)}</span>
       <span class="badge brass" style="margin-left:6px;">${esc(e.conteudo)}</span>
-      <div class="detalhe-resumo">${esc(e.resumo)}</div>
+      <div class="detalhe-resumo">${formatarResumoCompleto(e.resumo)}</div>
       ${e.gabarito ? `<p><strong>Resposta certa:</strong> ${esc(e.gabarito)}</p>` : ''}
       ${e.enunciado ? `<details style="margin-top:14px;"><summary style="cursor:pointer; color:var(--text-soft); font-size:.85rem;">ver enunciado original</summary><p style="margin-top:10px; line-height:1.6;">${esc(e.enunciado)}</p></details>` : ''}
       <div class="rodape-acoes">
