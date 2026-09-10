@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caderno de Erros — Tribunal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://js.puter.com/v2/"></script>
+<style>
+  :root{
+    --ink:#1C2B3A;
+    --ink-2:#28405A;
+    --paper:#EDE7DA;
+    --paper-2:#E3DCCB;
+    --card:#F7F4EC;
+    --wine:#8C2F39;
+    --wine-bg:#F4E4E3;
+    --olive:#2F6F4F;
+    --olive-bg:#E2EEE3;
+    --brass:#B08D3E;
+    --line:#D8D0BC;
+    --text:#2A2620;
+    --text-soft:#6B6355;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--paper); color:var(--text); font-family:'IBM Plex Sans', sans-serif; -webkit-font-smoothing:antialiased; }
+  h1,h2,h3,.serif{ font-family:'Source Serif 4', serif; }
+  #app{ max-width:1080px; margin:0 auto; padding:28px 20px 60px; }
+
+  header.top{ display:flex; align-items:baseline; justify-content:space-between; border-bottom:2px solid var(--ink); padding-bottom:14px; }
+  header.top h1{ font-size:1.6rem; font-weight:600; color:var(--ink); margin:0; }
+  header.top .subtitulo{ font-size:.85rem; color:var(--text-soft); }
+
+  nav.tabs{ display:flex; gap:6px; margin-top:0; }
+  nav.tabs button{
+    font-family:'IBM Plex Sans', sans-serif; font-size:.92rem; font-weight:600;
+    background:var(--paper-2); color:var(--text-soft); border:2px solid var(--ink); border-bottom:none;
+    padding:10px 16px 9px; cursor:pointer;
+    clip-path: polygon(0 100%, 0 6px, 6px 0, 100% 0, 100% 100%);
+    position:relative; top:2px; transition: background .15s, color .15s, top .15s;
+  }
+  nav.tabs button:hover{ color:var(--ink); }
+  nav.tabs button.active{ background:var(--card); color:var(--ink); top:0; }
+  main.painel{ background:var(--card); border:2px solid var(--ink); padding:26px 28px; min-height:340px; }
+
+  .regua{ border-left:3px solid var(--line); padding-left:20px; margin:6px 0; }
+  .badge{ display:inline-block; font-size:.72rem; font-weight:600; padding:3px 9px; border-radius:2px; background:var(--ink-2); color:#EDE7DA; }
+  .badge.brass{ background:#F1E6CB; color:#7A5F27; }
+  .badge.wine{ background:var(--wine-bg); color:var(--wine); }
+  .muted{ color:var(--text-soft); font-size:.88rem; }
+
+  .lista-item{ border:1px solid var(--line); background:var(--paper); padding:14px 16px; margin-bottom:10px; cursor:pointer; transition: border-color .15s; }
+  .lista-item:hover{ border-color:var(--brass); }
+  .lista-item .topo-item{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:6px; flex-wrap:wrap; }
+  .lista-item p{ margin:0; font-size:.9rem; line-height:1.45; }
+  .lista-item .meta{ font-size:.78rem; color:var(--text-soft); }
+
+  .vazio{ text-align:center; padding:50px 20px; color:var(--text-soft); }
+  .vazio h3{ color:var(--ink); margin-bottom:8px; }
+
+  button.acao{ font-family:'IBM Plex Sans', sans-serif; font-weight:600; font-size:.9rem; background:var(--ink); color:#F7F4EC; border:none; padding:10px 18px; cursor:pointer; }
+  button.acao:hover{ background:var(--ink-2); }
+  button.acao.secundario{ background:transparent; color:var(--ink); border:2px solid var(--ink); padding:8px 16px; }
+  button.acao.secundario:hover{ background:var(--paper-2); }
+  button.link-x{ background:none; border:none; color:var(--text-soft); cursor:pointer; font-size:.78rem; text-decoration:underline; padding:0; }
+
+  .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .campo{ margin-bottom:14px; }
+  .campo.full{ grid-column: 1 / -1; }
+  .campo label{ display:block; font-size:.82rem; font-weight:600; color:var(--ink); margin-bottom:5px; }
+  .campo input, .campo select, .campo textarea{ width:100%; font-family:'IBM Plex Sans', sans-serif; font-size:.92rem; padding:9px 11px; border:1px solid var(--line); background:#fff; color:var(--text); }
+  .campo textarea{ resize:vertical; min-height:80px; line-height:1.5; }
+  .campo input:focus, .campo select:focus, .campo textarea:focus{ outline:2px solid var(--brass); outline-offset:1px; border-color:var(--brass); }
+
+  .caixa-extrair{ border:1px dashed var(--brass); background:#FBF7EC; padding:16px 18px; margin-bottom:24px; }
+  .caixa-extrair label{ display:block; font-size:.82rem; font-weight:600; color:var(--ink); margin-bottom:5px; }
+  .caixa-extrair p.dica{ font-size:.78rem; color:var(--text-soft); margin:6px 0 10px; line-height:1.5; }
+
+  .stat-caixa{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:26px; }
+  .stat-caixa .item{ border:1px solid var(--line); padding:14px; text-align:center; background:var(--paper); }
+  .stat-caixa .item .num{ font-family:'Source Serif 4', serif; font-size:1.8rem; color:var(--ink); font-weight:600; }
+  .stat-caixa .item .lbl{ font-size:.76rem; color:var(--text-soft); margin-top:2px; }
+
+  table.materias{ width:100%; border-collapse:collapse; font-size:.9rem; margin-bottom:28px; }
+  table.materias th{ text-align:left; font-size:.75rem; color:var(--text-soft); border-bottom:2px solid var(--ink); padding:8px 6px; }
+  table.materias td{ padding:9px 6px; border-bottom:1px solid var(--line); }
+  table.materias .barra{ height:6px; background:var(--paper-2); position:relative; }
+  table.materias .barra span{ position:absolute; inset:0; background:var(--brass); }
+
+  select.filtro{ font-family:'IBM Plex Sans',sans-serif; padding:8px 10px; border:1px solid var(--line); background:#fff; font-size:.86rem; }
+  .filtros{ display:flex; gap:10px; flex-wrap:wrap; }
+  .cabecalho-secao{ display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px; }
+  .cabecalho-secao h2{ margin:0; font-size:1.15rem; color:var(--ink); }
+
+  .detalhe-resumo{ background:var(--paper); border-left:4px solid var(--brass); padding:14px 16px; margin:16px 0; font-size:.92rem; line-height:1.6; white-space:pre-wrap; }
+  .rodape-acoes{ display:flex; justify-content:space-between; align-items:center; margin-top:22px; }
+
+  .caixa-extrair textarea{ width:100%; font-family:'IBM Plex Sans', sans-serif; font-size:.92rem; padding:10px 12px; border:1px solid var(--line); background:#fff; color:var(--text); resize:vertical; line-height:1.55; }
+  .caixa-extrair textarea.area-questao{ min-height:260px; }
+  .caixa-extrair textarea:focus{ outline:2px solid var(--brass); outline-offset:1px; border-color:var(--brass); }
+
+  .caderno-layout{ display:flex; align-items:flex-start; gap:26px; }
+  .indice{ flex:0 0 210px; border-right:1px solid var(--line); padding-right:18px; position:sticky; top:16px; max-height:74vh; overflow-y:auto; }
+  .indice-titulo{ font-family:'IBM Plex Sans',sans-serif; font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-soft); margin:0 0 10px; }
+  .indice-materia{ margin-bottom:2px; }
+  .pill{ display:flex; justify-content:space-between; align-items:center; gap:8px; width:100%; text-align:left; background:none; border:none; font-family:'IBM Plex Sans',sans-serif; color:var(--text); padding:7px 8px; cursor:pointer; border-radius:3px; transition:background .12s, color .12s; }
+  .pill:hover{ background:var(--paper-2); }
+  .pill.ativo{ background:var(--ink); color:#F7F4EC; }
+  .pill .conta{ font-size:.7rem; opacity:.7; flex-shrink:0; }
+  .materia-pill{ font-size:.86rem; font-weight:600; }
+  .conteudo-pill{ font-size:.8rem; font-weight:500; padding:5px 8px; }
+  .indice-conteudos{ display:none; margin:2px 0 8px 8px; padding-left:9px; border-left:2px solid var(--line); }
+  .indice-conteudos.aberto{ display:block; }
+  .caderno-lista{ flex:1; min-width:0; margin:0; border-left:none; padding-left:0; }
+
+  @media (max-width:760px){
+    .caderno-layout{ flex-direction:column; }
+    .indice{ flex:none; width:100%; border-right:none; border-bottom:1px solid var(--line); padding-right:0; padding-bottom:14px; margin-bottom:6px; position:static; max-height:none; }
+  }
+
+  @media (max-width:620px){
+    .form-grid{ grid-template-columns:1fr; }
+    .stat-caixa{ grid-template-columns:1fr 1fr; }
+    nav.tabs button{ font-size:.8rem; padding:9px 11px 8px; }
+    main.painel{ padding:20px 16px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div>
+      <h1>Caderno de Erros — Tribunal</h1>
+      <div class="subtitulo">Analista Judiciário · questões resolvidas no Qconcursos</div>
+    </div>
+  </header>
+  <nav class="tabs" id="nav-tabs"></nav>
+  <main class="painel" id="painel"><div class="vazio">Carregando…</div></main>
+</div>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'caderno-erros-tribunal-v2';
+  const MATERIAS_SUGERIDAS = ['Língua Portuguesa','Direito Constitucional','Direito Administrativo','Direito Civil','Direito Processual Civil','Direito Penal','Direito Processual Penal','Direito do Trabalho','Direito Processual do Trabalho','Raciocínio Lógico','Informática','Direitos Humanos','Regimento Interno / Legislação institucional'];
+
+  let state = { tab: 'adicionar', erros: [], carregado: false, erroStorage: null, itemAbertoId: null, filtroMateria:'', filtroConteudo:'' };
+
+  function carregar(){
+    try{
+      const bruto = localStorage.getItem(STORAGE_KEY);
+      state.erros = bruto ? JSON.parse(bruto) : [];
+    }catch(e){ state.erros = []; }
+    state.carregado = true;
+    render();
+  }
+  function salvar(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.erros)); state.erroStorage = null; }
+    catch(e){ state.erroStorage = 'Não foi possível salvar agora neste navegador.'; }
+  }
+  function uid(){ return 'e_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
+  function esc(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function truncar(s, n){ s = s||''; return s.length > n ? s.slice(0,n).trim() + '…' : s; }
+
+  function setTab(t){ state.tab = t; state.itemAbertoId = null; render(); }
+
+  function viewAdicionar(){
+    return `
+      <div class="cabecalho-secao"><h2 class="serif">Adicionar ao caderno</h2></div>
+      <div class="caixa-extrair">
+        <label for="colar-questao">Cole a questão que você errou</label>
+        <p class="dica">Cole o enunciado, as alternativas e, se souber, a resposta certa (do jeito que aparece no Qconcursos). A IA organiza matéria, conteúdo, resumo e resposta certa automaticamente. Na primeira vez que você usar, uma janela do Puter vai pedir para você fazer login (é rápido e gratuito) — depois disso não pede mais.</p>
+        <textarea id="colar-questao" class="area-questao" placeholder="Cole aqui a questão completa..."></textarea>
+        <div style="margin-top:10px; display:flex; align-items:center; gap:12px;">
+          <button type="button" class="acao secundario" id="btn-gerar-ia">Gerar resumo com IA</button>
+          <span id="status-ia" class="muted"></span>
+        </div>
+      </div>
+      <form id="form-add" novalidate>
+        <p id="status-form" class="muted" style="display:none; color:var(--wine); font-weight:600;"></p>
+        <div class="form-grid">
+          <div class="campo">
+            <label for="f-materia">Matéria</label>
+            <input list="lista-materias" id="f-materia" required>
+            <datalist id="lista-materias">${MATERIAS_SUGERIDAS.map(m=>`<option value="${esc(m)}">`).join('')}</datalist>
+          </div>
+          <div class="campo">
+            <label for="f-conteudo">Conteúdo / assunto</label>
+            <input id="f-conteudo" placeholder="Ex: Atos administrativos - atributos" required>
+          </div>
+          <div class="campo full">
+            <label for="f-gabarito">Resposta certa</label>
+            <input id="f-gabarito" placeholder="Ex: alternativa C — ...">
+            <p id="status-gabarito" class="muted" style="margin-top:6px; display:none;"></p>
+          </div>
+          <div class="campo full">
+            <label for="f-resumo">Resumo do erro</label>
+            <textarea id="f-resumo" required placeholder="O que revisar, por que errou, o que a banca cobrou..."></textarea>
+          </div>
+          <div class="campo full">
+            <label for="f-enunciado">Enunciado original (opcional, para referência)</label>
+            <textarea id="f-enunciado" placeholder="Preenchido automaticamente ao gerar o resumo com IA."></textarea>
+          </div>
+        </div>
+        <button type="submit" class="acao">Salvar no caderno</button>
+      </form>`;
+  }
+
+  async function gerarResumoIA(textoQuestao){
+    if(typeof puter === 'undefined' || !puter.ai || !puter.ai.chat){
+      throw new Error('Não foi possível carregar o Puter.js. Verifique sua conexão e recarregue a página.');
+    }
+    const prompt = `Você é um assistente de estudos para concurso de tribunal (cargo de analista judiciário).
+Vou te enviar uma questão que o candidato errou, copiada do Qconcursos (enunciado, alternativas e, possivelmente, a resposta certa indicada).
+
+Devolva SOMENTE um JSON válido, sem markdown, sem texto antes ou depois, exatamente neste formato:
+{"materia": "...", "conteudo": "...", "resumo": "...", "gabarito": "..."}
+
+Onde:
+- "materia": a matéria do edital a que a questão pertence (ex: Direito Administrativo, Direito Constitucional, Língua Portuguesa, Direito Processual Civil, Raciocínio Lógico etc).
+- "conteudo": o assunto específico dentro da matéria (ex: "Atos administrativos - atributos", "Concordância verbal", "Prazos processuais").
+- "resumo": um resumo objetivo, de 4 a 8 linhas, explicando o conceito cobrado e por que a resposta correta está certa, focado no que o candidato precisa revisar para não errar de novo.
+- "gabarito": a resposta certa (letra e/ou texto da alternativa), se estiver indicada no texto. Se não estiver explícita, infira com base no seu conhecimento e adicione "(inferido, confira no site)" ao final.
+
+Texto da questão:
+"""
+${textoQuestao}
+"""`;
+
+    let respostaBruta;
+    const tentativas = [0, 1500, 4000]; // ms de espera antes de cada tentativa
+    let ultimoErro;
+    for(let i=0; i<tentativas.length; i++){
+      if(tentativas[i] > 0) await new Promise(r => setTimeout(r, tentativas[i]));
+      try{
+        // puter.ai.chat cuida sozinho do login "User-Pays": na primeira vez que
+        // a pessoa usar a IA, o próprio Puter abre um pop-up pedindo login/conta
+        // Puter, e o custo do uso da IA fica por conta dela, não do dono do site.
+        const resposta = await puter.ai.chat(prompt);
+        respostaBruta = String(resposta);
+      }catch(err){
+        ultimoErro = new Error('Falha ao chamar a IA via Puter: ' + (err && err.message ? err.message : err));
+        continue;
+      }
+      if(respostaBruta) break;
+    }
+    if(!respostaBruta) throw ultimoErro || new Error('A IA não retornou nenhuma resposta. Tente novamente.');
+
+    const limpo = respostaBruta.replace(/```json|```/g, '').trim();
+    try{
+      return JSON.parse(limpo);
+    }catch(err){
+      throw new Error('Não consegui interpretar o resumo gerado. Texto recebido: ' + limpo.slice(0,300));
+    }
+  }
+
+  async function gerarJustificativaIA(textoQuestao, respostaCerta){
+    if(typeof puter === 'undefined' || !puter.ai || !puter.ai.chat){
+      throw new Error('Não foi possível carregar o Puter.js. Verifique sua conexão e recarregue a página.');
+    }
+    const prompt = `Você é um assistente de estudos para concurso de tribunal (cargo de analista judiciário).
+Um candidato registrou que, na questão abaixo, a resposta correta é: "${respostaCerta}".
+
+Escreva uma justificativa objetiva (4 a 8 linhas) explicando por que essa é a resposta certa, citando o conceito, artigo de lei, regra gramatical ou raciocínio envolvido, focada no que o candidato precisa revisar para não errar de novo. Responda apenas com o texto corrido da justificativa, sem repetir o enunciado, sem introduções como "claro" ou "aqui está", e sem formatação markdown.
+
+Texto da questão:
+"""
+${textoQuestao}
+"""`;
+
+    let respostaTexto;
+    const tentativas = [0, 1500, 4000];
+    let ultimoErro;
+    for(let i=0; i<tentativas.length; i++){
+      if(tentativas[i] > 0) await new Promise(r => setTimeout(r, tentativas[i]));
+      try{
+        const res = await puter.ai.chat(prompt);
+        respostaTexto = String(res).trim();
+      }catch(err){
+        ultimoErro = new Error('Falha ao chamar a IA via Puter: ' + (err && err.message ? err.message : err));
+        continue;
+      }
+      if(respostaTexto) break;
+    }
+    if(!respostaTexto) throw ultimoErro || new Error('A IA não retornou nenhuma justificativa. Tente novamente.');
+    return respostaTexto.replace(/```/g, '').trim();
+  }
+
+  // ---------- ABA: CADERNO ----------
+  function viewCaderno(){
+    if(state.erros.length === 0){
+      return `<div class="vazio"><h3 class="serif">Caderno vazio</h3><p>As questões que você errar no Qconcursos entram aqui, organizadas por matéria e conteúdo.</p></div>`;
+    }
+    if(state.itemAbertoId){
+      const it = state.erros.find(x => x.id === state.itemAbertoId);
+      if(it) return viewDetalhe(it);
+      state.itemAbertoId = null;
+    }
+
+    // monta índice: matéria -> { conteudo: count }
+    const indice = {};
+    state.erros.forEach(e => {
+      indice[e.materia] = indice[e.materia] || {};
+      indice[e.materia][e.conteudo] = (indice[e.materia][e.conteudo] || 0) + 1;
+    });
+    const materiasOrdenadas = Object.keys(indice).sort();
+
+    let filtrados = state.erros;
+    if(state.filtroMateria) filtrados = filtrados.filter(e => e.materia === state.filtroMateria);
+    if(state.filtroConteudo) filtrados = filtrados.filter(e => e.conteudo === state.filtroConteudo);
+
+    const indiceHtml = materiasOrdenadas.map(m => {
+      const conteudos = Object.keys(indice[m]).sort();
+      const totalMateria = Object.values(indice[m]).reduce((a,b)=>a+b,0);
+      return `
+        <div class="indice-materia">
+          <button class="pill materia-pill ${state.filtroMateria===m && !state.filtroConteudo ? 'ativo' : ''}" data-materia="${esc(m)}">
+            ${esc(m)} <span class="conta">${totalMateria}</span>
+          </button>
+          <div class="indice-conteudos ${state.filtroMateria===m ? 'aberto' : ''}">
+            ${conteudos.map(c => `
+              <button class="pill conteudo-pill ${state.filtroMateria===m && state.filtroConteudo===c ? 'ativo' : ''}" data-materia="${esc(m)}" data-conteudo="${esc(c)}">
+                ${esc(c)} <span class="conta">${indice[m][c]}</span>
+              </button>`).join('')}
+          </div>
+        </div>`;
+    }).join('');
+
+    return `
+      <div class="cabecalho-secao">
+        <h2 class="serif">Caderno de erros</h2>
+        ${(state.filtroMateria || state.filtroConteudo) ? `<button class="link-x" data-limpar-filtro>ver todos (${state.erros.length})</button>` : `<span class="muted">${state.erros.length} no total</span>`}
+      </div>
+      <div class="caderno-layout">
+        <aside class="indice">
+          <h3 class="indice-titulo">Índice</h3>
+          ${indiceHtml}
+        </aside>
+        <div class="regua caderno-lista">
+          ${filtrados.length === 0 ? '<p class="muted">Nenhum item neste filtro.</p>' : filtrados.map(e => `
+            <div class="lista-item" data-ver="${e.id}">
+              <div class="topo-item">
+                <span class="badge">${esc(e.materia)}</span>
+                <span class="badge brass">${esc(e.conteudo)}</span>
+              </div>
+              <p>${esc(truncar(e.resumo, 170))}</p>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }
+
+  function viewDetalhe(e){
+    return `
+      <button class="link-x" data-voltar style="margin-bottom:16px;">← voltar ao caderno</button>
+      <span class="badge">${esc(e.materia)}</span>
+      <span class="badge brass" style="margin-left:6px;">${esc(e.conteudo)}</span>
+      <div class="detalhe-resumo">${esc(e.resumo)}</div>
+      ${e.gabarito ? `<p><strong>Resposta certa:</strong> ${esc(e.gabarito)}</p>` : ''}
+      ${e.enunciado ? `<details style="margin-top:14px;"><summary style="cursor:pointer; color:var(--text-soft); font-size:.85rem;">ver enunciado original</summary><p style="margin-top:10px; line-height:1.6;">${esc(e.enunciado)}</p></details>` : ''}
+      <div class="rodape-acoes">
+        <span></span>
+        <button class="link-x" data-excluir="${e.id}">excluir do caderno</button>
+      </div>`;
+  }
+
+  // ---------- ABA: ESTATÍSTICAS ----------
+  function viewEstatisticas(){
+    const total = state.erros.length;
+    const porMateria = {};
+    state.erros.forEach(e => {
+      porMateria[e.materia] = porMateria[e.materia] || {};
+      porMateria[e.materia][e.conteudo] = (porMateria[e.materia][e.conteudo] || 0) + 1;
+    });
+    const materiasOrdenadas = Object.entries(porMateria)
+      .map(([m, conteudos]) => [m, Object.values(conteudos).reduce((a,b)=>a+b,0), conteudos])
+      .sort((a,b) => b[1]-a[1]);
+    const max = materiasOrdenadas.length ? materiasOrdenadas[0][1] : 1;
+
+    return `
+      <div class="cabecalho-secao"><h2 class="serif">Onde você mais erra</h2></div>
+      <div class="stat-caixa">
+        <div class="item"><div class="num">${total}</div><div class="lbl">erros registrados</div></div>
+        <div class="item"><div class="num">${materiasOrdenadas.length}</div><div class="lbl">matérias</div></div>
+        <div class="item"><div class="num">${new Set(state.erros.map(e=>e.conteudo)).size}</div><div class="lbl">conteúdos distintos</div></div>
+      </div>
+      ${materiasOrdenadas.length === 0 ? '<p class="muted">Adicione erros para ver a distribuição.</p>' : `
+      <table class="materias">
+        <thead><tr><th>Matéria</th><th>Erros</th><th></th></tr></thead>
+        <tbody>
+          ${materiasOrdenadas.map(([m, count]) => `
+            <tr>
+              <td>${esc(m)}</td>
+              <td>${count}</td>
+              <td style="width:120px;"><div class="barra"><span style="width:${Math.round((count/max)*100)}%;"></span></div></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+      ${materiasOrdenadas.map(([m, count, conteudos]) => `
+        <div class="cabecalho-secao" style="margin-bottom:10px;"><h3 class="serif" style="font-size:1rem; margin:0;">${esc(m)}</h3></div>
+        <table class="materias" style="margin-bottom:22px;">
+          <tbody>
+            ${Object.entries(conteudos).sort((a,b)=>b[1]-a[1]).map(([c,n]) => `
+              <tr><td>${esc(c)}</td><td style="width:60px;">${n}</td></tr>`).join('')}
+          </tbody>
+        </table>
+      `).join('')}
+      `}`;
+  }
+
+  const TABS = [
+    {id:'adicionar', label:'Adicionar ao Caderno'},
+    {id:'caderno', label:'Caderno de Erros'},
+    {id:'stats', label:'Estatísticas'},
+  ];
+
+  function render(){
+    document.getElementById('nav-tabs').innerHTML = TABS.map(t => `<button class="${state.tab===t.id?'active':''}" data-tab="${t.id}">${t.label}</button>`).join('');
+    const painel = document.getElementById('painel');
+    if(!state.carregado){ painel.innerHTML = '<div class="vazio">Carregando…</div>'; return; }
+    let html = '';
+    if(state.tab === 'adicionar') html = viewAdicionar();
+    else if(state.tab === 'caderno') html = viewCaderno();
+    else if(state.tab === 'stats') html = viewEstatisticas();
+    if(state.erroStorage) html = `<div class="detalhe-resumo" style="border-color:var(--wine);"><strong>Aviso:</strong> ${esc(state.erroStorage)}</div>` + html;
+    painel.innerHTML = html;
+  }
+
+  document.getElementById('nav-tabs').addEventListener('click', e => {
+    const b = e.target.closest('button[data-tab]');
+    if(b) setTab(b.dataset.tab);
+  });
+
+  document.getElementById('painel').addEventListener('click', async e => {
+    const btnGerarIA = e.target.closest('#btn-gerar-ia');
+    if(btnGerarIA){
+      const texto = document.getElementById('colar-questao').value.trim();
+      const status = document.getElementById('status-ia');
+      if(!texto){ status.textContent = 'Cole a questão antes de gerar o resumo.'; status.style.color = 'var(--wine)'; return; }
+      btnGerarIA.disabled = true;
+      const textoOriginalBtn = btnGerarIA.textContent;
+      btnGerarIA.textContent = 'Gerando resumo...';
+      status.textContent = '';
+      try{
+        const resultado = await gerarResumoIA(texto);
+        document.getElementById('f-materia').value = resultado.materia || '';
+        document.getElementById('f-conteudo').value = resultado.conteudo || '';
+        document.getElementById('f-resumo').value = resultado.resumo || '';
+        document.getElementById('f-gabarito').value = resultado.gabarito || '';
+        document.getElementById('f-enunciado').value = texto;
+        status.textContent = 'Resumo gerado — confira os campos abaixo antes de salvar.';
+        status.style.color = 'var(--olive)';
+      }catch(err){
+        console.error('Erro ao gerar resumo com IA:', err);
+        status.textContent = 'Erro: ' + err.message;
+        status.style.color = 'var(--wine)';
+      }finally{
+        btnGerarIA.disabled = false;
+        btnGerarIA.textContent = textoOriginalBtn;
+      }
+      return;
+    }
+    const ver = e.target.closest('[data-ver]');
+    if(ver){ state.itemAbertoId = ver.dataset.ver; render(); return; }
+    const voltar = e.target.closest('[data-voltar]');
+    if(voltar){ state.itemAbertoId = null; render(); return; }
+    const excluir = e.target.closest('[data-excluir]');
+    if(excluir){
+      if(confirm('Excluir este item do caderno?')){
+        state.erros = state.erros.filter(x => x.id !== excluir.dataset.excluir);
+        salvar();
+        state.itemAbertoId = null;
+        render();
+      }
+      return;
+    }
+    const materiaBtn = e.target.closest('.materia-pill');
+    if(materiaBtn){
+      const m = materiaBtn.dataset.materia;
+      if(state.filtroMateria === m && !state.filtroConteudo){ state.filtroMateria = ''; }
+      else { state.filtroMateria = m; state.filtroConteudo = ''; }
+      render();
+      return;
+    }
+    const conteudoBtn = e.target.closest('.conteudo-pill');
+    if(conteudoBtn){
+      state.filtroMateria = conteudoBtn.dataset.materia;
+      state.filtroConteudo = conteudoBtn.dataset.conteudo;
+      render();
+      return;
+    }
+    const limparFiltro = e.target.closest('[data-limpar-filtro]');
+    if(limparFiltro){ state.filtroMateria = ''; state.filtroConteudo = ''; render(); return; }
+    const btnInserirJust = e.target.closest('#btn-inserir-justificativa');
+    if(btnInserirJust){
+      const status = document.getElementById('status-gabarito');
+      const textoJust = status.dataset.justificativa || '';
+      const campoResumo = document.getElementById('f-resumo');
+      campoResumo.value = (campoResumo.value.trim() ? campoResumo.value.trim() + '\n\n' : '') + textoJust;
+      status.style.color = 'var(--olive)';
+      status.textContent = 'Justificativa inserida no resumo.';
+      return;
+    }
+  });
+
+  document.getElementById('painel').addEventListener('focusout', async e => {
+    if(e.target.id !== 'f-gabarito') return;
+    const campoGabarito = e.target;
+    const resposta = campoGabarito.value.trim();
+    const status = document.getElementById('status-gabarito');
+    if(!status) return;
+    if(!resposta){ status.style.display = 'none'; campoGabarito.dataset.ultimaResposta = ''; return; }
+    if(resposta === campoGabarito.dataset.ultimaResposta) return;
+    const textoQuestao = document.getElementById('colar-questao').value.trim() || document.getElementById('f-enunciado').value.trim();
+    if(!textoQuestao){
+      status.style.display = 'block';
+      status.style.color = 'var(--text-soft)';
+      status.textContent = 'Cole a questão acima para eu justificar essa resposta automaticamente.';
+      return;
+    }
+    campoGabarito.dataset.ultimaResposta = resposta;
+    status.style.display = 'block';
+    status.style.color = 'var(--text-soft)';
+    status.textContent = 'Buscando a justificativa dessa resposta...';
+    try{
+      const justificativa = await gerarJustificativaIA(textoQuestao, resposta);
+      const campoResumo = document.getElementById('f-resumo');
+      if(!campoResumo.value.trim()){
+        campoResumo.value = justificativa;
+        status.style.color = 'var(--olive)';
+        status.textContent = 'Justificativa gerada e preenchida no resumo — revise antes de salvar.';
+      }else{
+        status.style.color = 'var(--olive)';
+        status.dataset.justificativa = justificativa;
+        status.innerHTML = 'Justificativa pronta — <button type="button" class="link-x" id="btn-inserir-justificativa">inserir no resumo</button>';
+      }
+    }catch(err){
+      console.error('Erro ao gerar justificativa:', err);
+      status.style.color = 'var(--wine)';
+      status.textContent = 'Erro ao gerar justificativa: ' + err.message;
+    }
+  });
+
+  document.getElementById('painel').addEventListener('change', e => {
+    if(e.target.id === 'filtro-materia'){ state.filtroMateria = e.target.value; state.filtroConteudo=''; render(); }
+    if(e.target.id === 'filtro-conteudo'){ state.filtroConteudo = e.target.value; render(); }
+  });
+
+  document.getElementById('painel').addEventListener('submit', async e => {
+    if(e.target.id === 'form-add'){
+      e.preventDefault();
+      const materia = document.getElementById('f-materia').value.trim();
+      const conteudo = document.getElementById('f-conteudo').value.trim();
+      const resumo = document.getElementById('f-resumo').value.trim();
+      const statusForm = document.getElementById('status-form');
+      const faltando = [];
+      if(!materia) faltando.push('Matéria');
+      if(!conteudo) faltando.push('Conteúdo / assunto');
+      if(!resumo) faltando.push('Resumo do erro');
+      if(faltando.length){
+        statusForm.style.display = 'block';
+        statusForm.textContent = 'Preencha antes de salvar: ' + faltando.join(', ') + '.';
+        document.getElementById(faltando[0] === 'Matéria' ? 'f-materia' : faltando[0] === 'Conteúdo / assunto' ? 'f-conteudo' : 'f-resumo').focus();
+        return;
+      }
+      const item = {
+        id: uid(),
+        materia,
+        conteudo,
+        gabarito: document.getElementById('f-gabarito').value.trim(),
+        resumo,
+        enunciado: document.getElementById('f-enunciado').value.trim(),
+        data: new Date().toISOString(),
+      };
+      state.erros.push(item);
+      salvar();
+      setTab('caderno');
+    }
+  });
+
+  carregar();
+})();
+</script>
+</body>
+</html>
